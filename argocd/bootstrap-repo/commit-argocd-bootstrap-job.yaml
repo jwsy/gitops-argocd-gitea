@@ -1,0 +1,208 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: commit-argocd-bootstrap
+  namespace: argocd
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+
+      containers:
+      - name: git
+        image: alpine/git:2.49.1
+
+        env:
+        - name: GITEA_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: gitea-admin-creds
+              key: token
+
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+
+          ##################################################################
+          # Git configuration
+          ##################################################################
+
+          git config --global user.name "gitea-bootstrap"
+          git config --global user.email "admin@localhost"
+
+          ##################################################################
+          # Clone GitOps repository using in-cluster Gitea service
+          ##################################################################
+
+          git clone \
+            -c http.extraHeader="Authorization: token ${GITEA_TOKEN}" \
+            http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git \
+            repo
+
+          cd repo
+
+          git config http.http://gitea-http.gitea.svc.cluster.local:3000/.extraHeader \
+            "Authorization: token ${GITEA_TOKEN}"
+
+          ##################################################################
+          # Root app
+          #
+          # This is the app-of-apps entrypoint.
+          # It watches argocd/apps and creates child Applications.
+          ##################################################################
+
+          mkdir -p argocd/root-app
+
+          cat > argocd/root-app/application.yaml <<'ROOTAPP'
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitops-apps
+            namespace: argocd
+          spec:
+            project: default
+
+            source:
+              repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+              targetRevision: main
+              path: argocd/apps
+              directory:
+                recurse: true
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: argocd
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+          ROOTAPP
+
+          ##################################################################
+          # Argo CD self-management
+          ##################################################################
+
+          mkdir -p argocd/apps/argocd
+
+          cp argocd/helm/values.yaml \
+             argocd/apps/argocd/values.yaml
+
+          cat > argocd/apps/argocd/application.yaml <<'ARGOAPP'
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: argocd
+            namespace: argocd
+          spec:
+            project: default
+
+            source:
+              repoURL: https://argoproj.github.io/argo-helm
+              chart: argo-cd
+              targetRevision: 9.6.0
+              helm:
+                releaseName: argocd
+                valueFiles:
+                  - values.yaml
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: argocd
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+          ARGOAPP
+
+          ##################################################################
+          # Gitea self-management
+          ##################################################################
+
+          mkdir -p argocd/apps/gitea
+
+          cp gitea/helm/values.yaml \
+             argocd/apps/gitea/values.yaml
+
+          cat > argocd/apps/gitea/application.yaml <<'GITEAAPP'
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea
+            namespace: argocd
+          spec:
+            project: default
+
+            source:
+              repoURL: https://dl.gitea.com/charts/
+              chart: gitea
+              targetRevision: 12.3.0
+              helm:
+                releaseName: gitea
+                valueFiles:
+                  - values.yaml
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+          GITEAAPP
+
+          ##################################################################
+          # jade-shooter application
+          ##################################################################
+
+          mkdir -p argocd/apps/jade-shooter
+
+          cat > argocd/apps/jade-shooter/application.yaml <<'APP'
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: jade-shooter
+            namespace: argocd
+          spec:
+            project: default
+
+            source:
+              repoURL: https://github.com/jwsy/simplest-k8s.git
+              targetRevision: helm4
+              path: .
+              helm:
+                valueFiles:
+                  - values.yaml
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: jade-shooter
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+          APP
+
+          cat > argocd/apps/jade-shooter/values.yaml <<'VALUES'
+          replicaCount: 1
+          VALUES
+
+          ##################################################################
+          # Commit and push changes
+          ##################################################################
+
+          git add argocd/root-app argocd/apps
+
+          git commit \
+            -m "Add Argo CD root app, self-management, Gitea, and jade-shooter" \
+            || true
+
+          git push
