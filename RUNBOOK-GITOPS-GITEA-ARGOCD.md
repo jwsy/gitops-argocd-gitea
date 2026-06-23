@@ -300,7 +300,7 @@ branch 'main' set up to track 'origin/main'.
 
 `argocd/chart/values.yaml` contains the ArgoCD configuration. Values are nested under the dependency name (`argo-cd:`).
 
-One value needs to match your cluster: the Traefik ClusterIP. ArgoCD's repo-server needs to reach Gitea through the cluster ingress, and the `hostAliases` entry makes `gitea.rancher.localhost` resolve correctly inside ArgoCD pods.
+⚠️ One value needs to match your cluster: the Traefik ClusterIP. ArgoCD's repo-server needs to reach Gitea through the cluster ingress, and the `hostAliases` entry makes `gitea.rancher.localhost` resolve correctly inside ArgoCD pods.
 
 Get the IP and patch the values file:
 
@@ -319,6 +319,13 @@ Verify:
 
 ```bash
 grep -A2 hostAliases argocd/chart/values.yaml
+```
+
+Commit the patched values — this must reach Gitea before ArgoCD starts managing itself, otherwise the repo-server can't resolve `gitea.rancher.localhost`:
+
+```bash
+git add argocd/chart/values.yaml
+git commit -m "Patch ArgoCD hostAlias with cluster Traefik IP"
 ```
 
 Login will be:
@@ -424,9 +431,9 @@ kubectl create secret generic gitea-admin-creds \
   -o yaml | kubectl apply -f -
 ```
 
-## 11. Push the Bootstrap Repository
+## 11. Push to Gitea
 
-Before the bootstrap Job runs, the repository must contain the Helm values and bootstrap assets that the Job references.
+The bootstrap Job clones this repo from inside the cluster. Everything it needs — the wrapper charts and the patched `argocd/chart/values.yaml` — must be in Gitea before the Job runs.
 
 Verify the remote:
 
@@ -440,13 +447,16 @@ Expected:
 origin https://gitea.rancher.localhost/platform/gitops-argocd-gitea.git
 ```
 
-Commit the bootstrap assets:
+You should have two unpushed commits at this point: the initial push from step 7 already happened, and step 8 added the IP patch commit. Push both:
 
 ```
-git add .
-git commit \
-  -m "Initial GitOps bootstrap repository" \
-  || true
+git log --oneline origin/main..HEAD
+```
+
+Expected:
+
+```
+<hash> Patch ArgoCD hostAlias with cluster Traefik IP
 ```
 
 Push to Gitea:
@@ -870,4 +880,3 @@ Argo CD manages jade-shooter.
 ```
 
 This is the core self-hosted GitOps pattern.
-
