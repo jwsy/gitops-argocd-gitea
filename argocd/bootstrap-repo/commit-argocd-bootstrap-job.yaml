@@ -84,12 +84,10 @@ spec:
 
           ##################################################################
           # Argo CD self-management
+          # Points to the wrapper chart at argocd/chart
           ##################################################################
 
           mkdir -p argocd/apps/argocd
-
-          cp argocd/helm/values.yaml \
-             argocd/apps/argocd/values.yaml
 
           cat > argocd/apps/argocd/application.yaml <<'ARGOAPP'
           apiVersion: argoproj.io/v1alpha1
@@ -101,13 +99,9 @@ spec:
             project: default
 
             source:
-              repoURL: https://argoproj.github.io/argo-helm
-              chart: argo-cd
-              targetRevision: 9.6.0
-              helm:
-                releaseName: argocd
-                valueFiles:
-                  - values.yaml
+              repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+              targetRevision: main
+              path: argocd/chart
 
             destination:
               server: https://kubernetes.default.svc
@@ -121,12 +115,10 @@ spec:
 
           ##################################################################
           # Gitea self-management
+          # Points to the wrapper chart at gitea/chart
           ##################################################################
 
           mkdir -p argocd/apps/gitea
-
-          cp gitea/helm/values.yaml \
-             argocd/apps/gitea/values.yaml
 
           cat > argocd/apps/gitea/application.yaml <<'GITEAAPP'
           apiVersion: argoproj.io/v1alpha1
@@ -138,13 +130,9 @@ spec:
             project: default
 
             source:
-              repoURL: https://dl.gitea.com/charts/
-              chart: gitea
-              targetRevision: 12.3.0
-              helm:
-                releaseName: gitea
-                valueFiles:
-                  - values.yaml
+              repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+              targetRevision: main
+              path: gitea/chart
 
             destination:
               server: https://kubernetes.default.svc

@@ -1,0 +1,52 @@
+gitea:
+  gitea:
+    admin:
+      username: admin
+      password: rootroot
+      email: admin@localhost
+
+    config:
+      database:
+        DB_TYPE: sqlite3
+        PATH: /data/gitea/gitea.db
+
+      server:
+        DOMAIN: gitea.rancher.localhost
+        ROOT_URL: https://gitea.rancher.localhost/
+        SSH_DOMAIN: gitea.rancher.localhost
+
+      cache:
+        ADAPTER: memory
+
+      session:
+        PROVIDER: memory
+
+      queue:
+        TYPE: persistable-channel
+        DATADIR: queues/
+
+  service:
+    http:
+      type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: gitea.rancher.localhost
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - gitea.rancher.localhost
+
+  persistence:
+    enabled: true
+    size: 5Gi
+
+  postgresql-ha:
+    enabled: false
+
+  valkey-cluster:
+    enabled: false
