@@ -19,3 +19,18 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+  ignoreDifferences:
+    # Gitea was helm-installed before ArgoCD adopted it, so its PVC carries
+    # Helm ownership metadata and provisioner annotations that don't exist in
+    # ArgoCD's rendered target. Bound PVCs are also server-mutated (volumeName,
+    # storageClassName). Ignore that noise so the app reports Synced.
+    - group: ""
+      kind: PersistentVolumeClaim
+      jqPathExpressions:
+        - .spec.volumeName
+        - .spec.storageClassName
+        - .spec.volumeMode
+        - .status
+        - .metadata.annotations
+        - .metadata.labels
