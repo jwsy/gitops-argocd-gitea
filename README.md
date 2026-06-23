@@ -465,19 +465,6 @@ Expected:
 origin https://gitea.rancher.localhost/platform/gitops-argocd-gitea.git
 ```
 
-Check what commits are pending:
-
-```
-git log --oneline origin/main..HEAD
-```
-
-Expected commits include the IP patch and the ArgoCD Chart.lock:
-
-```
-<hash> Add ArgoCD chart lock
-<hash> Patch ArgoCD hostAlias with cluster Traefik IP
-```
-
 Push to Gitea, rebasing first in case anything landed on the remote since step 7:
 
 ```
