@@ -142,6 +142,15 @@ spec:
               automated:
                 prune: true
                 selfHeal: true
+
+            ignoreDifferences:
+              - group: ""
+                kind: PersistentVolumeClaim
+                jqPathExpressions:
+                  - .spec.volumeName
+                  - .spec.storageClassName
+                  - .spec.volumeMode
+                  - .status
           GITEAAPP
 
           ##################################################################

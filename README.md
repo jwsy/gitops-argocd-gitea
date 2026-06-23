@@ -871,6 +871,32 @@ Self-signed certificate issue
 Namespace missing
 ```
 
+### Gitea shows OutOfSync on the PVC
+
+The Gitea PersistentVolumeClaim gets server-populated fields (`volumeName`, `storageClassName`, `volumeMode`, `status`) after provisioning. ArgoCD detects these as drift because they don't exist in the Helm chart output, so the application permanently shows OutOfSync even though everything is working.
+
+The Gitea Application manifest already includes `ignoreDifferences` to suppress this:
+
+```yaml
+ignoreDifferences:
+  - group: ""
+    kind: PersistentVolumeClaim
+    jqPathExpressions:
+      - .spec.volumeName
+      - .spec.storageClassName
+      - .spec.volumeMode
+      - .status
+```
+
+If you see this on a fresh install before ArgoCD has synced the updated manifest from Git, trigger a manual sync:
+
+```bash
+kubectl annotate application gitea \
+  -n argocd \
+  argocd.argoproj.io/refresh=normal \
+  --overwrite
+```
+
 ---
 
 ## 21. Workshop reset
