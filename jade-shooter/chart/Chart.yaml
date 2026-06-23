@@ -1,0 +1,4 @@
+apiVersion: v2
+name: jade-shooter
+version: 1.0.4
+appVersion: v2.0.3
