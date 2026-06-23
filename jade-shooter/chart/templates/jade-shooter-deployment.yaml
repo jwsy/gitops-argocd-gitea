@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jade-shooter
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: jade-shooter
+  template:
+    metadata:
+      labels:
+        app: jade-shooter
+    spec:
+      containers:
+        - name: jade-shooter
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 80

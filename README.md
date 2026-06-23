@@ -105,6 +105,11 @@ Expected:
 ./argocd/chart/values.yaml
 ./gitea/chart/Chart.yaml
 ./gitea/chart/values.yaml
+./jade-shooter/chart/Chart.yaml
+./jade-shooter/chart/values.yaml
+./jade-shooter/chart/templates/jade-shooter-deployment.yaml
+./jade-shooter/chart/templates/jade-shooter-ingress.yaml
+./jade-shooter/chart/templates/jade-shooter-service.yaml
 ```
 
 ---
@@ -494,12 +499,17 @@ Expected files include:
 
 ```
 .gitignore
-gitea/chart/Chart.yaml
-gitea/chart/values.yaml
-argocd/chart/Chart.yaml
-argocd/chart/values.yaml
 argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml
 argocd/bootstrap-root-app/gitea-repo-secret.yaml
+argocd/chart/Chart.yaml
+argocd/chart/values.yaml
+gitea/chart/Chart.yaml
+gitea/chart/values.yaml
+jade-shooter/chart/Chart.yaml
+jade-shooter/chart/values.yaml
+jade-shooter/chart/templates/jade-shooter-deployment.yaml
+jade-shooter/chart/templates/jade-shooter-ingress.yaml
+jade-shooter/chart/templates/jade-shooter-service.yaml
 ```
 Optionally verify from Gitea:
 
@@ -513,7 +523,7 @@ You should see the repository contents in the web UI.
 
 ## 12. Run the bootstrap commit Job
 
-The job at `argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml` clones the GitOps repo from inside the cluster and commits the ArgoCD Application manifests into it. The ArgoCD and Gitea Applications point to the wrapper chart paths (`argocd/chart` and `gitea/chart`), so ArgoCD resolves Helm dependencies and manages those releases entirely from Git.
+The job at `argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml` clones the GitOps repo from inside the cluster and commits the ArgoCD Application manifests into it. All three Applications point to chart paths within this repo — `argocd/chart`, `gitea/chart`, and `jade-shooter/chart` — so ArgoCD manages every release entirely from Git with no external chart sources.
 
 It creates:
 
@@ -522,7 +532,6 @@ argocd/root-app/application.yaml
 argocd/apps/argocd/application.yaml
 argocd/apps/gitea/application.yaml
 argocd/apps/jade-shooter/application.yaml
-argocd/apps/jade-shooter/values.yaml
 ```
 
 ```bash
@@ -536,11 +545,10 @@ Expected final log line:
 ```text
 Cloning into 'repo'...
 [main b164003] Add Argo CD root app, self-management, Gitea, and jade-shooter
- 5 files changed, 120 insertions(+)
+ 4 files changed, 100 insertions(+)
  create mode 100644 argocd/apps/argocd/application.yaml
  create mode 100644 argocd/apps/gitea/application.yaml
  create mode 100644 argocd/apps/jade-shooter/application.yaml
- create mode 100644 argocd/apps/jade-shooter/values.yaml
  create mode 100644 argocd/root-app/application.yaml
 remote: . Processing 1 references
 remote: Processed 1 references in total
@@ -568,7 +576,6 @@ Expected files include:
 argocd/apps/argocd/application.yaml
 argocd/apps/gitea/application.yaml
 argocd/apps/jade-shooter/application.yaml
-argocd/apps/jade-shooter/values.yaml
 argocd/root-app/application.yaml
 ```
 
@@ -724,19 +731,27 @@ rootroot
 
 ## 18. Demonstrate GitOps reconciliation
 
-Change jade-shooter replica count:
+The jade-shooter chart is vendored in `jade-shooter/chart/` — change `replicaCount` there:
 
 ```bash
 sed -i.bak 's/replicaCount: 1/replicaCount: 2/' \
-  argocd/apps/jade-shooter/values.yaml
+  jade-shooter/chart/values.yaml
 
-rm -f argocd/apps/jade-shooter/values.yaml.bak
+rm -f jade-shooter/chart/values.yaml.bak
 
-git add argocd/apps/jade-shooter/values.yaml
+git add jade-shooter/chart/values.yaml
 
 git commit -m "Scale jade-shooter to two replicas"
 
-git -c http.sslVerify=false push
+TOKEN=$(
+kubectl get secret gitea-admin-token \
+  -n gitea \
+  -o jsonpath='{.data.token}' | base64 -d
+)
+git \
+  -c http.sslVerify=false \
+  -c http.extraHeader="Authorization: token $TOKEN" \
+  push origin HEAD:main
 ```
 
 Watch Argo CD reconcile:

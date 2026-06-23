@@ -175,12 +175,9 @@ spec:
             project: default
 
             source:
-              repoURL: https://github.com/jwsy/simplest-k8s.git
-              targetRevision: helm4
-              path: .
-              helm:
-                valueFiles:
-                  - values.yaml
+              repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+              targetRevision: main
+              path: jade-shooter/chart
 
             destination:
               server: https://kubernetes.default.svc
@@ -193,10 +190,6 @@ spec:
               syncOptions:
                 - CreateNamespace=true
           APP
-
-          cat > argocd/apps/jade-shooter/values.yaml <<'VALUES'
-          replicaCount: 1
-          VALUES
 
           ##################################################################
           # Commit and push changes
