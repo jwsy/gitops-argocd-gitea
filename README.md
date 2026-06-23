@@ -44,6 +44,16 @@ git
 curl
 ```
 
+Add the workshop hostnames to `/etc/hosts`:
+
+```bash
+sudo sh -c 'cat >> /etc/hosts <<EOF
+127.0.0.1 gitea.rancher.localhost
+127.0.0.1 argocd.rancher.localhost
+127.0.0.1 jade-shooter.rancher.localhost
+EOF'
+```
+
 Verify cluster access:
 
 ```bash
