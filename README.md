@@ -82,11 +82,8 @@ kubectl delete namespace argocd --wait=true --ignore-not-found
 Clone the repository and move into the directory:
 
 ```bash
-git clone \
-  https://github.com/jwsy/gitops-argocd-gitea.git \
-  ~/code/gitops-argocd-gitea
-
-cd ~/code/gitops-argocd-gitea
+git clone https://github.com/jwsy/gitops-argocd-gitea.git
+cd gitops-argocd-gitea
 ```
 
 Verify the starting files:
@@ -944,7 +941,7 @@ kubectl delete namespace gitea --wait=true --ignore-not-found
 Remove local repo if desired:
 
 ```bash
-rm -rf ~/code/gitops-argocd-gitea
+rm -rf gitops-argocd-gitea
 ```
 
 ---
