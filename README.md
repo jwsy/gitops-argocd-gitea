@@ -279,7 +279,7 @@ git remote set-url origin \
 
 git \
   -c http.extraHeader="Authorization: token $TOKEN" \
-  push -u origin main
+  push -u origin HEAD:main
 ```
 
 Expected output:
@@ -470,7 +470,7 @@ kubectl get secret gitea-admin-token \
 git \
   -c http.sslVerify=false \
   -c http.extraHeader="Authorization: token $TOKEN" \
-  push -u origin main
+  push -u origin HEAD:main
 ```
 
 Validate the repository contains the bootstrap assets:
