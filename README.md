@@ -873,7 +873,7 @@ Namespace missing
 
 ### Gitea shows OutOfSync on the PVC
 
-The Gitea PersistentVolumeClaim gets server-populated fields (`volumeName`, `storageClassName`, `volumeMode`, `status`) after provisioning. ArgoCD detects these as drift because they don't exist in the Helm chart output, so the application permanently shows OutOfSync even though everything is working.
+Root cause: Gitea was installed directly with `helm install` before ArgoCD adopted it. The PVC therefore carries Helm ownership metadata (`meta.helm.sh/*`, `managed-by: Helm`) and provisioner annotations that Kubernetes adds at bind time. None of that exists in ArgoCD's rendered target, so the diff never clears.
 
 The Gitea Application manifest already includes `ignoreDifferences` to suppress this:
 
@@ -886,9 +886,11 @@ ignoreDifferences:
       - .spec.storageClassName
       - .spec.volumeMode
       - .status
+      - .metadata.annotations
+      - .metadata.labels
 ```
 
-If you see this on a fresh install before ArgoCD has synced the updated manifest from Git, trigger a manual sync:
+If you see this before ArgoCD has picked up the manifest from Git, trigger a manual refresh:
 
 ```bash
 kubectl annotate application gitea \
