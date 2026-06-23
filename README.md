@@ -157,6 +157,13 @@ Resolve the chart dependency (downloads the upstream Gitea chart into `gitea/cha
 helm dependency update gitea/chart
 ```
 
+Commit the generated `Chart.lock` — it pins the exact dependency version:
+
+```bash
+git add gitea/chart/Chart.lock
+git commit -m "Add Gitea chart lock"
+```
+
 Install from the local wrapper chart:
 
 ```bash
@@ -348,6 +355,13 @@ Resolve the chart dependency (downloads the upstream argo-cd chart into `argocd/
 helm dependency update argocd/chart
 ```
 
+Commit the generated `Chart.lock`:
+
+```bash
+git add argocd/chart/Chart.lock
+git commit -m "Add ArgoCD chart lock"
+```
+
 Install from the local wrapper chart:
 
 ```bash
@@ -451,19 +465,20 @@ Expected:
 origin https://gitea.rancher.localhost/platform/gitops-argocd-gitea.git
 ```
 
-You should have two unpushed commits at this point: the initial push from step 7 already happened, and step 8 added the IP patch commit. Push both:
+Check what commits are pending:
 
 ```
 git log --oneline origin/main..HEAD
 ```
 
-Expected:
+Expected commits include the IP patch and the ArgoCD Chart.lock:
 
 ```
+<hash> Add ArgoCD chart lock
 <hash> Patch ArgoCD hostAlias with cluster Traefik IP
 ```
 
-Push to Gitea:
+Push to Gitea, rebasing first in case anything landed on the remote since step 7:
 
 ```
 TOKEN=$(
@@ -471,6 +486,13 @@ kubectl get secret gitea-admin-token \
   -n gitea \
   -o jsonpath='{.data.token}' | base64 -d
 )
+git \
+  -c http.sslVerify=false \
+  -c http.extraHeader="Authorization: token $TOKEN" \
+  fetch origin
+
+git rebase origin/main
+
 git \
   -c http.sslVerify=false \
   -c http.extraHeader="Authorization: token $TOKEN" \
