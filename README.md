@@ -618,29 +618,48 @@ kubectl apply -f argocd/bootstrap-root-app/gitea-repo-secret.yaml
 
 ## 15. Apply the root app
 
+The root app is the app-of-apps entrypoint. It was committed to the GitOps repo by the bootstrap job in step 13. Apply it to ArgoCD now:
+
 ```bash
 kubectl apply -f argocd/root-app/application.yaml
 ```
 
-This creates the app-of-apps controller application:
+This is what you're applying:
 
-```text
-gitops-apps
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-apps
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+    targetRevision: main
+    path: argocd/apps
+    directory:
+      recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
 ```
 
-The root app recursively watches:
+A few things worth noting:
 
-```text
-argocd/apps
-```
+- **`repoURL` uses the in-cluster Gitea service address**, not the external `gitea.rancher.localhost` hostname. ArgoCD runs inside the cluster and reaches Gitea directly over the internal network, bypassing the ingress and TLS certificate issues.
+- **`path: argocd/apps` with `recurse: true`** tells ArgoCD to scan that directory tree and apply every `Application` manifest it finds. The bootstrap job committed one manifest per app there (`argocd`, `gitea`, `jade-shooter`).
+- **`automated` sync with `prune` and `selfHeal`** means ArgoCD will automatically apply changes when Git changes, remove resources that are no longer in Git, and revert manual changes made outside of Git.
+- **`destination: argocd`** is where ArgoCD creates the child `Application` objects, not where the apps themselves run. Each child Application specifies its own namespace.
 
-and creates:
-
-```text
-argocd
-gitea
-jade-shooter
-```
+Once applied, ArgoCD reads `argocd/apps`, discovers the three child Applications, and starts reconciling them. From this point on, Git is the source of truth.
 
 ---
 
