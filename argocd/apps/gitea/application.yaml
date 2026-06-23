@@ -7,13 +7,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://dl.gitea.com/charts/
-    chart: gitea
-    targetRevision: 12.3.0
-    helm:
-      releaseName: gitea
-      valueFiles:
-        - values.yaml
+    repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+    targetRevision: main
+    path: gitea/chart
 
   destination:
     server: https://kubernetes.default.svc

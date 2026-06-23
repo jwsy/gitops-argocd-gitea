@@ -7,13 +7,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://argoproj.github.io/argo-helm
-    chart: argo-cd
-    targetRevision: 9.6.0
-    helm:
-      releaseName: argocd
-      valueFiles:
-        - values.yaml
+    repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+    targetRevision: main
+    path: argocd/chart
 
   destination:
     server: https://kubernetes.default.svc
