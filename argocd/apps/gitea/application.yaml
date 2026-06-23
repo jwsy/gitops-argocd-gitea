@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitea
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.git
+    targetRevision: main
+    path: gitea/chart
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitea
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jqPathExpressions:
+        - .spec.volumeName
+        - .spec.storageClassName
+        - .spec.volumeMode
+        - .status
