@@ -2,7 +2,7 @@ argo-cd:
   global:
     domain: argocd.rancher.localhost
     hostAliases:
-      - ip: "10.43.107.73"
+      - ip: "10.43.81.62"
         hostnames:
           - gitea.rancher.localhost
 
@@ -17,16 +17,7 @@ argo-cd:
   dex:
     enabled: false
 
-  redis-ha:
-    enabled: false
-
-  redis:
-    enabled: true
-
   notifications:
-    enabled: false
-
-  applicationSet:
     enabled: false
 
   server:
