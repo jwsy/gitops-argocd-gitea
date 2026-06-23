@@ -79,10 +79,10 @@ kubectl delete namespace argocd --wait=true --ignore-not-found
 
 ## 1. Clone the workshop repository
 
-The `start` branch contains the wrapper charts and bootstrap assets you need. Clone it and move into the directory:
+Clone the repository and move into the directory:
 
 ```bash
-git clone --branch start \
+git clone \
   https://github.com/jwsy/gitops-argocd-gitea.git \
   ~/code/gitops-argocd-gitea
 
