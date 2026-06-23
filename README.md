@@ -157,7 +157,7 @@ Resolve the chart dependency (downloads the upstream Gitea chart into `gitea/cha
 helm dependency update gitea/chart
 ```
 
-Commit the generated `Chart.lock` — it pins the exact dependency version:
+Commit the generated `Chart.lock` — it pins the exact dependency version. `origin` still points to GitHub at this point; don't push yet — you'll update the remote after creating the Gitea repository in step 6:
 
 ```bash
 git add gitea/chart/Chart.lock
@@ -268,22 +268,20 @@ curl -k \
   }' || true
 ```
 
+Point the local repo at Gitea now so subsequent commits don't accidentally push to GitHub:
+
+```bash
+git config --global http.https://gitea.rancher.localhost.sslVerify false
+
+git remote set-url origin \
+  https://gitea.rancher.localhost/platform/gitops-argocd-gitea.git
+```
+
 ---
 
 ## 7. Push the workshop repository to Gitea
 
-Temporarily allow Git to tolerate the lab self-signed certificate:
-
 ```bash
-git config --global http.https://gitea.rancher.localhost.sslVerify false
-```
-
-Point the repo at your Gitea and push:
-
-```bash
-git remote set-url origin \
-  https://gitea.rancher.localhost/platform/gitops-argocd-gitea.git
-
 git \
   -c http.extraHeader="Authorization: token $TOKEN" \
   push -u origin HEAD:main
@@ -513,9 +511,9 @@ You should see the repository contents in the web UI.
 
 ⸻
 
-## 12. Create the bootstrap commit Job
+## 12. Run the bootstrap commit Job
 
-This job clones the GitOps repo from inside the cluster and commits the ArgoCD Application manifests into it. It uses the `alpine/git` image.
+The job at `argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml` clones the GitOps repo from inside the cluster and commits the ArgoCD Application manifests into it. The ArgoCD and Gitea Applications point to the wrapper chart paths (`argocd/chart` and `gitea/chart`), so ArgoCD resolves Helm dependencies and manages those releases entirely from Git.
 
 It creates:
 
@@ -527,18 +525,10 @@ argocd/apps/jade-shooter/application.yaml
 argocd/apps/jade-shooter/values.yaml
 ```
 
-The ArgoCD and Gitea Applications point to the wrapper chart paths (`argocd/chart` and `gitea/chart`) in the GitOps repo, so ArgoCD resolves Helm dependencies and manages the releases entirely from Git.
-
-The job manifest is at `argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml` and is already committed to the repo.
-
----
-
-## 13. Run the bootstrap commit Job
-
 ```bash
 kubectl -n argocd delete job commit-argocd-bootstrap --ignore-not-found
 kubectl apply -f argocd/bootstrap-repo/commit-argocd-bootstrap-job.yaml
-kubectl logs -n argocd job/commit-argocd-bootstrap  -f
+kubectl logs -n argocd job/commit-argocd-bootstrap -f
 ```
 
 Expected final log line:
@@ -560,7 +550,7 @@ To http://gitea-http.gitea.svc.cluster.local:3000/platform/gitops-argocd-gitea.g
 
 ---
 
-## 14. Pull generated files locally
+## 13. Pull generated files locally
 
 ```bash
 git -c http.sslVerify=false pull --rebase origin main
@@ -584,9 +574,11 @@ argocd/root-app/application.yaml
 
 ---
 
-## 15. Create Argo CD repository Secret
+## 14. Create Argo CD repository Secret
 
 Argo CD needs repository credentials before it can read the GitOps repo from Gitea.
+
+Generate the secret file using the token from the `gitea-admin-creds` secret created in step 10:
 
 ```bash
 TOKEN=$(
@@ -610,13 +602,18 @@ stringData:
   password: "$TOKEN"
   insecure: "true"
 EOF
+```
 
+Apply it:
+
+```bash
 kubectl apply -f argocd/bootstrap-root-app/gitea-repo-secret.yaml
 ```
 
 ---
 
 ## 15. Apply the root app
+
 
 The root app is the app-of-apps entrypoint. It was committed to the GitOps repo by the bootstrap job in step 13. Apply it to ArgoCD now:
 

@@ -17,16 +17,7 @@ argo-cd:
   dex:
     enabled: false
 
-  redis-ha:
-    enabled: false
-
-  redis:
-    enabled: true
-
   notifications:
-    enabled: false
-
-  applicationSet:
     enabled: false
 
   server:
