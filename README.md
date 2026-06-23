@@ -29,6 +29,7 @@ This workshop uses:
 ```text
 gitea.rancher.localhost
 argocd.rancher.localhost
+jade-shooter.rancher.localhost
 ```
 
 ---
@@ -38,9 +39,7 @@ argocd.rancher.localhost
 You need:
 
 ```text
-Rancher Desktop
-kubectl
-helm
+Rancher Desktop  (provides kubectl and helm)
 git
 curl
 ```
