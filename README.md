@@ -126,11 +126,14 @@ helm repo update
 
 ---
 
-## 3. Review the Gitea wrapper chart
+## 3. Review the charts
 
-`gitea/chart/Chart.yaml` declares the upstream Gitea chart as a Helm dependency so the chart version and values both live in this repo:
+The repo contains three Helm charts. All three are self-contained — chart version, values, and templates live here with no external chart sources at runtime.
+
+**`gitea/chart/`** and **`argocd/chart/`** are wrapper charts: they declare upstream charts as Helm dependencies. `Chart.yaml` pins the version and registry; `values.yaml` nests configuration under the dependency name so Helm scopes it to the sub-chart:
 
 ```yaml
+# gitea/chart/Chart.yaml
 apiVersion: v2
 name: gitea
 version: 0.1.0
@@ -140,9 +143,8 @@ dependencies:
     repository: https://dl.gitea.com/charts/
 ```
 
-`gitea/chart/values.yaml` contains the Gitea configuration. Values are nested under the dependency name (`gitea:`) so Helm scopes them to the sub-chart:
-
 ```yaml
+# gitea/chart/values.yaml (excerpt)
 gitea:
   gitea:
     admin:
@@ -150,6 +152,14 @@ gitea:
       password: rootroot
       email: admin@localhost
   ...
+```
+
+**`jade-shooter/chart/`** is a vendored chart (copied from `simplest-k8s` v1.0.4). It has no upstream dependency — the templates are committed directly here, which is why it doesn't need `helm dependency update`:
+
+```yaml
+# jade-shooter/chart/values.yaml
+image: ghcr.io/jwsy/jade-shooter-22:v2.0.3
+replicaCount: 1
 ```
 
 ---
