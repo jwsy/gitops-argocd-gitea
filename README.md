@@ -326,6 +326,10 @@ Commit the patched values — this must reach Gitea before ArgoCD starts managin
 ```bash
 git add argocd/chart/values.yaml
 git commit -m "Patch ArgoCD hostAlias with cluster Traefik IP"
+
+git \
+  -c http.extraHeader="Authorization: token $TOKEN" \
+  push -u origin HEAD:main
 ```
 
 Login will be:
