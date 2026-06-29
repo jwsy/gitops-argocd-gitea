@@ -82,6 +82,7 @@ kubectl delete statefulset,pod,svc,secret,configmap,pvc,ingress \
 
 kubectl delete namespace gitea --wait=true --ignore-not-found
 kubectl delete namespace argocd --wait=true --ignore-not-found
+kubectl delete namespace jade-shooter --wait=true --ignore-not-found
 ```
 
 ---
@@ -957,6 +958,7 @@ kubectl annotate application gitea \
 
 ```bash
 kubectl delete namespace argocd --wait=true --ignore-not-found
+kubectl delete namespace jade-shooter --wait=true --ignore-not-found
 
 helm uninstall gitea -n gitea || true
 
@@ -964,7 +966,7 @@ kubectl delete statefulset,pod,svc,secret,configmap,pvc,ingress \
   -n gitea \
   -l app.kubernetes.io/instance=gitea \
   --ignore-not-found
-  
+
 kubectl delete namespace gitea --wait=true --ignore-not-found
 ```
 
