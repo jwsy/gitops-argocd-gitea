@@ -2,17 +2,19 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: jade-shooter
-  namespace: {{ .Release.Namespace }}
 spec:
   ingressClassName: traefik
   rules:
-    - host: jade-shooter.rancher.localhost
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: jade-shooter
-                port:
-                  number: 80
+  - host: jade-shooter.rancher.localhost
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: jade-shooter-service
+            port:
+              number: 38080
+  tls:
+  - hosts:
+    - jade-shooter.rancher.localhost

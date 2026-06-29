@@ -1,11 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: jade-shooter
-  namespace: {{ .Release.Namespace }}
+  name: jade-shooter-service
 spec:
   selector:
     app: jade-shooter
   ports:
-    - port: 80
-      targetPort: 80
+  - port: 38080
+    targetPort: 8080

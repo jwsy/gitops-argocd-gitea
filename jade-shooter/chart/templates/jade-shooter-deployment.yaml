@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jade-shooter
-  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount | default 1 }}
   selector:
@@ -14,7 +13,11 @@ spec:
         app: jade-shooter
     spec:
       containers:
-        - name: jade-shooter
-          image: {{ .Values.image }}
-          ports:
-            - containerPort: 80
+      - name: jade-shooter0
+        image: {{ .Values.image }}
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8080
