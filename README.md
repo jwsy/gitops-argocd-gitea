@@ -160,7 +160,30 @@ gitea:
   ...
 ```
 
-**`jade-shooter/chart/`** is a vendored chart (copied from `simplest-k8s` v1.0.4). It has no upstream dependency — the templates are committed directly here, which is why it doesn't need `helm dependency update`:
+**`jade-shooter/chart/`** is a vendored chart. Vendoring means copying the upstream chart's files directly into this repo rather than declaring it as a dependency. The templates, `Chart.yaml`, and `values.yaml` are all committed here — ArgoCD renders the chart with no outbound network calls at sync time, and there's no `helm dependency update` step.
+
+The upstream chart is published as an OCI artifact. Because Rancher Desktop ships Helm 4, which has first-class OCI support with no feature flags required, you could test or install it directly with a single command:
+
+```bash
+helm install jade-shooter \
+  oci://ghcr.io/jwsy/charts/jade-shooter \
+  --version 1.0.4 \
+  --namespace jade-shooter \
+  --create-namespace
+```
+
+To vendor a new version yourself, pull the chart and copy its contents into `jade-shooter/chart/`:
+
+```bash
+helm pull oci://ghcr.io/jwsy/charts/jade-shooter \
+  --version 1.0.4 \
+  --untar \
+  --untardir /tmp/jade-shooter
+
+cp -r /tmp/jade-shooter/jade-shooter/* jade-shooter/chart/
+```
+
+One local customization is applied after copying: `ingressClassName: traefik` is added to the ingress template because Rancher Desktop's Traefik controller requires it, but the upstream chart doesn't include it.
 
 ```yaml
 # jade-shooter/chart/values.yaml
