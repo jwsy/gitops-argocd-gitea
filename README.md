@@ -183,8 +183,6 @@ helm pull oci://ghcr.io/jwsy/charts/jade-shooter \
 cp -r /tmp/jade-shooter/jade-shooter/* jade-shooter/chart/
 ```
 
-One local customization is applied after copying: `ingressClassName: traefik` is added to the ingress template because Rancher Desktop's Traefik controller requires it, but the upstream chart doesn't include it.
-
 ```yaml
 # jade-shooter/chart/values.yaml
 image: ghcr.io/jwsy/jade-shooter-22:v2.0.3

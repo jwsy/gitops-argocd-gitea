@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   name: jade-shooter
 spec:
-  ingressClassName: traefik
   rules:
   - host: jade-shooter.rancher.localhost
     http:
